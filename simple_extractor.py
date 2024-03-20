@@ -85,7 +85,12 @@ def get_palette(num_cls):
             palette[j * 3 + 2] |= (((lab >> 2) & 1) << (7 - i))
             i += 1
             lab >>= 3
-    return palette
+
+    new_palette = palette
+    new_palette[:6] = [0] * 6
+    new_palette[6:] = [255] * (len(palette) - 1)
+  
+    return new_palette
 
 
 def main():
