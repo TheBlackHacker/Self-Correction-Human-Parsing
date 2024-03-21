@@ -73,24 +73,24 @@ def get_palette(num_cls):
     """
     n = num_cls
     palette = [0] * (n * 3)
+    exclude_label = ['Background', 'Hat', 'Hair', 'Glove', 'Sunglasses', 'Face']
+
     for j in range(0, n):
         lab = j
+        lab_name = dataset_settings['lip']['label'][j]
         palette[j * 3 + 0] = 0
         palette[j * 3 + 1] = 0
         palette[j * 3 + 2] = 0
         i = 0
         while lab:
-            palette[j * 3 + 0] |= (((lab >> 0) & 1) << (7 - i))
-            palette[j * 3 + 1] |= (((lab >> 1) & 1) << (7 - i))
-            palette[j * 3 + 2] |= (((lab >> 2) & 1) << (7 - i))
+            if lab_name not in exclude_label:
+              palette[j * 3 + 0] = 255
+              palette[j * 3 + 1] = 255
+              palette[j * 3 + 2] = 255
             i += 1
             lab >>= 3
 
-    new_palette = palette
-    new_palette[:6] = [0] * 6
-    new_palette[6:] = [255] * (len(palette) - 1)
-  
-    return new_palette
+    return palette
 
 
 def main():
