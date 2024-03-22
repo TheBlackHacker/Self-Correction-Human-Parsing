@@ -4,11 +4,13 @@ from io import BytesIO
 import sys
 import json
 import os
+import shutil
+import uuid
 
 app = Flask(__name__)
 
 # Import the function from the Python script
-sys.path.append('<path_to_directory_containing_script>')
+#sys.path.append('<path_to_directory_containing_script>')
 from simple_extractor import main
 
 def image_to_base64(image_path):
@@ -18,36 +20,32 @@ def image_to_base64(image_path):
 @app.route('/run_extractor', methods=['POST'])
 def run_extractor():
     try:
-        # Lấy dữ liệu từ request
         data = request.json
 
-        # Decode base64 image và lưu vào BytesIO object
         image_data = base64.b64decode(data['image'])
         image_buffer = BytesIO(image_data)
 
-        # Lưu ảnh vào một file tạm thời
-        temp_image_path = 'temp_image.png'
+        temp_dir = 'temp/'+str(uuid.uuid4())[:12]
+        os.makedirs(temp_dir)
+
+        temp_image_path = os.path.join(temp_dir, 'temp_image.png')
         with open(temp_image_path, 'wb') as temp_image_file:
             temp_image_file.write(image_buffer.getvalue())
 
-        # Chuẩn bị các đối số cho hàm main
         args = {
             'dataset': data.get('dataset', 'lip'),
-            'model-restore': data.get('model_restore', ''),
+            'model_restore': data.get('model_restore', 'checkpoints/final.pth'),
             'gpu': data.get('gpu', '0'),
-            'input-dir': '',
-            'output-dir': '',
+            'input_dir': temp_dir,
+            'output_dir': temp_dir,
             'logits': data.get('logits', False)
         }
 
-        # Thực thi hàm main với các đối số
         main(args)
 
-        # Đọc và encode file kết quả thành base64
         output_image_base64 = image_to_base64(temp_image_path)
 
-        # Xóa ảnh tạm sau khi hoàn thành
-        os.remove(temp_image_path)
+        shutil.rmtree(temp_dir)
 
         return jsonify({'image': output_image_base64}), 200
 
